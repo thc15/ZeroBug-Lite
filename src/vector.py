@@ -51,17 +51,17 @@ class gaitEngine(object):
     coxa = int(11.6)
     femur = 44
     tibia = 69
-    
+
     coxaPos = [] #  body position
     leg = [] # current leg positions (without body translation/rotation)
     legS = [] # defaulegT leg positions
     legT = [] # target leg positions
     legIK = [] # leg positions for body translation/rotation
-    
+
     legAngle = [[0 for x in range(3)] for y in range(6)]
 
     def __init__(self): # Initialization
-        
+
         for i in range(0, 6):
             self.coxaPos.append(vector())
             self.leg.append(vector())
@@ -69,18 +69,18 @@ class gaitEngine(object):
             self.legT.append(vector())
             self.legIK.append(vector())
             self.coxaPos.append(vector())
-            
+
         self.leg[0].setto(-70, -85, 0)
         self.leg[1].setto(-90, 0, 0)
         self.leg[2].setto(-70, 85, 0)
         self.leg[3].setto(70, 85, 0)
         self.leg[4].setto(90, 0, 0)
         self.leg[5].setto(70, -85, 0)
-        
+
         for i in range(0, 6):
             self.legS[i]._setto(self.leg[i])
             self.legT[i]._setto(self.leg[i])
-                
+
         bodyHeight = 40
         self.coxaPos[0].setto(-28, -48, bodyHeight)
         self.coxaPos[1].setto(-35, 0, bodyHeight)
@@ -90,19 +90,19 @@ class gaitEngine(object):
         self.coxaPos[5].setto(28, -48, bodyHeight)
 
     def gaitStep(self):
-        
+
         self.walkX = constrain(self.walkX, -0.8, 0.8)
         self.walkY = constrain(self.walkY, -0.6, 0.6)
         self.walkR = constrain(self.walkR, -0.6, 0.6)
-        
+
         self.gaitStepN += self.gaitSpeed
         gSeqLength = len(self.gSeq)
         if self.gaitStepN >= gSeqLength: self.gaitStepN = 0
-        
+
         # calculate rotation and translation of legs over ground  
         s = sin(-self.walkR / 100)
         c = cos(-self.walkR / 100)
-        
+
         # move legs with ground
         for i in range(0, 6):
             if self.leg[i].z == 0:
@@ -114,7 +114,7 @@ class gaitEngine(object):
                     self.legT[i].y = self.leg[i].y
                 else: # reset target when getting to far off center
                     self.legT[i]._setto(self.legS[i])
-                    
+
         # if leg's turn in sequence AND if not on target AND not already moving
         # TODO: Do not rely on rounding gaitStepN to match the sequence in gSeq
         for legN in range (0, 6):
@@ -125,7 +125,7 @@ class gaitEngine(object):
                 self.leg[legN].xs = self.leg[legN].x
                 self.leg[legN].ys = self.leg[legN].y
                 self.legMoving[legN] = 1
-            
+
             # if leg ist already moving
             if self.legMoving[legN] == 1:
                 distanceLeft = self.leg[legN].move2D(self.legSpeed); 
@@ -140,11 +140,11 @@ class gaitEngine(object):
         self.traX = constrain(self.traX, -40, 40)
         self.traY = constrain(self.traY, -40, 40)
         self.traZ = constrain(self.traZ, -40, 40)
-        
+
         self.rotX = constrain(self.rotX, -0.3, 0.3)
         self.rotY = constrain(self.rotY, -0.25, 0.25)
         self.rotZ = constrain(self.rotZ, -0.25, 0.25)
-        
+
         for i in range(0, 6):
             self.legIK[i].x = self.leg[i].x * cos(self.rotZ) * cos(self.rotX) - self.leg[i].z * cos(self.rotZ) * sin(self.rotX) + self.leg[i].y * sin(self.rotZ) + self.traX
             self.legIK[i].y = self.leg[i].x * (sin(self.rotY) * sin(self.rotX) - cos(self.rotY) * sin(self.rotZ) * cos(self.rotX)) + self.leg[i].z * (cos(self.rotY) * sin(self.rotZ) * sin(self.rotX) + sin(self.rotY) * cos(self.rotX)) + self.leg[i].y * cos(self.rotY) * cos(self.rotZ) + self.traY
@@ -157,7 +157,7 @@ class gaitEngine(object):
             deltaX = (self.legIK[i].x - self.coxaPos[i].x)
             deltaY = (self.legIK[i].y - self.coxaPos[i].y)
             deltaZ = -(self.legIK[i].z - self.coxaPos[i].z)
-            
+
             legLength = sqrt(sq(deltaX) + sq(deltaY))
             HF = sqrt(sq(legLength - self.coxa)+sq(deltaZ))
             # Throw error if target is unreachable
@@ -168,10 +168,9 @@ class gaitEngine(object):
             self.legAngle[i][1] = PI / 2 - (AX1 + AX2)
             BX1 = acos((sq(HF)-sq(self.tibia)-sq(self.femur))/(-2*self.femur*self.tibia))
             self.legAngle[i][2] = PI / 2 - BX1
-            self.legAngle[i][0] = atan(deltaY / deltaX)            
+            self.legAngle[i][0] = atan(deltaY / deltaX)
         return mathError
-    
-    
+
 # derived from Oscar Liangs legged robot code base
 class vector(object):
 
@@ -216,7 +215,7 @@ class vector(object):
 
     def move2D(self, pps):
         totalDistance = sqrt(sq(self.xt - self.xs) + sq(self.yt - self.ys))
-        
+
         pps = 30 / pps
         dx = self.xt - self.x
         dy = self.yt - self.y
@@ -232,8 +231,8 @@ class vector(object):
             self.x = self.xt
             self.y = self.yt
         distance = sqrt(sq(self.xt - self.x) + sq(self.yt - self.y))
-        
+
         distanceLeft = distance / totalDistance
         if totalDistance == 0: distanceLeft = 0
-        
+
         return distanceLeft
